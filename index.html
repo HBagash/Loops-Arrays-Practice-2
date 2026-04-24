@@ -18,8 +18,7 @@
     <!-- html2canvas for Exporting PNG Reports -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- Pyodide for actual Python Execution -->
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+    <!-- Pyodide loaded at bottom of body -->
 
     <style>
         :root {
@@ -748,8 +747,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 
     <script>
         // Tab & Topic Navigation
@@ -1240,14 +1238,23 @@
             let execCode = code;
             if (meta && meta.type === "inputSim") {
                 // Simulate: first call returns wrong value, second returns the password
-                const mockSetup = `import builtins\n_input_calls = iter(["wrong", "${meta.password}"])\ndef _mock_input(prompt=""):\n    return next(_input_calls)\nbuiltins.input = _mock_input\n`;
+                const mockSetup = `_input_calls = iter(["wrong", "${meta.password}"])\ndef _mock_input(prompt=""):\n    return next(_input_calls)\ninput = _mock_input\n`;
                 setupCode = mockSetup + setupCode;
             }
 
+            // Inject a loop counter to prevent infinite loops from freezing the browser
+            // We wrap the user's code with a safety limit on loop iterations
+            const safetyPrefix = "class _LoopGuard:\n    max_iters = 50000\n    count = 0\n    @staticmethod\n    def check():\n        _LoopGuard.count += 1\n        if _LoopGuard.count > _LoopGuard.max_iters:\n            raise RuntimeError('Loop exceeded maximum iterations (possible infinite loop)')\n";
+            // Inject _LoopGuard.check() call into while loop bodies
+            const safeExecCode = execCode.replace(
+                /^(\s*)(while\s+.+:\s*)$/gm,
+                '$1$2\n$1    _LoopGuard.check()'
+            );
+
             try {
                 pyodide.runPython("import sys; from io import StringIO; sys.stdout = StringIO()");
-                // Run setup + user code
-                await pyodide.runPythonAsync(setupCode + execCode);
+                // Run safety prefix + setup + user code
+                await pyodide.runPythonAsync(safetyPrefix + setupCode + safeExecCode);
                 output = pyodide.runPython("sys.stdout.getvalue()");
             } catch (err) {
                 const errMsg = err.toString();
@@ -1257,8 +1264,10 @@
                 } else if (errMsg.includes("SyntaxError")) {
                     errors.push("[Python Error] Syntax Error. Your code has broken grammar.");
                     sessionStats.mistakes.syntaxError++;
+                } else if (errMsg.includes("maximum iterations") || errMsg.includes("infinite loop")) {
+                    errors.push("[Infinite Loop] Your loop ran too many times and was stopped. Make sure you update your loop variable to avoid an infinite loop!");
+                    sessionStats.mistakes.missingIterator++;
                 } else if (errMsg.includes("StopIteration")) {
-                    // Input sim used too many input() calls — likely an issue with the loop
                     errors.push("[Logic Error] Your loop called input() too many times. Check your loop condition.");
                     sessionStats.mistakes.missingIterator++;
                 } else {
