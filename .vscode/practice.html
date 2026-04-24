@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python While Loop Practice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: #1e1e2e;
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e2e;
+            border-right: 1px solid #30363d;
+        }
+
+        .right-panel {
+            width: 320px;
+            background: #1a1a22;
+            border-left: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 15px;
+            background: #0d1117;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #30363d;
+            background: #1a1a22;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: #1a1a22;
+            color: #8b949e;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: #c9d1d9;
+        }
+
+        .tab.active {
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .panel-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .question-box {
+            padding: 20px;
+            background: #0d1117;
+            border-bottom: 1px solid #30363d;
+            flex-shrink: 0;
+        }
+
+        .question-box h2 {
+            font-size: 14px;
+            color: #58a6ff;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            color: #e0e0e0;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #1e1e2e;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .line-numbers {
+            background: #2d2d38;
+            color: #6e7681;
+            padding: 8px 10px;
+            text-align: right;
+            font-size: 12px;
+            line-height: 1.5;
+            font-family: 'Consolas', 'Courier New', monospace;
+            user-select: none;
+            border-right: 1px solid #30363d;
+            overflow: hidden;
+            min-width: 40px;
+            white-space: pre;
+        }
+
+        .editor-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .syntax-highlight {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 8px 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #e0e0e0;
+            white-space: pre;
+            overflow: auto;
+            pointer-events: none;
+            z-index: 1;
+            background: #1e1e2e;
+            margin: 0;
+            border: none;
+        }
+
+        /* Control flow: while, for, if, else, elif, def, return, break... */
+        .hl-kw { color: #ff7b72; font-weight: bold; }
+        /* Built-in functions: print, input, int, str, len, range... */
+        .hl-fn { color: #d2a8ff; }
+        /* Strings: "hello", 'world' */
+        .hl-str { color: #a5d6ff; }
+        /* Numbers: 42, 3.14 */
+        .hl-num { color: #79c0ff; }
+        /* Booleans and None: True, False, None */
+        .hl-bool { color: #79c0ff; font-weight: bold; }
+        /* Comments: # this is a comment */
+        .hl-cmt { color: #8b949e; font-style: italic; }
+        /* Operators: +, -, *, /, ==, !=, <, >, <=, >= */
+        .hl-op { color: #ff7b72; }
+        /* Logical keywords: and, or, not, in, is */
+        .hl-log { color: #ff7b72; font-weight: bold; }
+        /* Punctuation: (, ), :, , */
+        .hl-punc { color: #e0e0e0; }
+
+        .editor-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 8px 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: transparent;
+            color: transparent;
+            caret-color: #e0e0e0;
+            border: none;
+            resize: none;
+            overflow-x: hidden;
+            overflow-y: auto;
+            z-index: 2;
+            white-space: pre;
+        }
+
+        .editor-input::placeholder {
+            color: #6e7681;
+        }
+
+        .editor-input:focus {
+            outline: none;
+        }
+
+        .editor-input::selection {
+            background: rgba(88, 166, 255, 0.3);
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+            background: #0d1117;
+            border-top: 1px solid #30363d;
+            flex-shrink: 0;
+        }
+
+        button {
+            flex: 1;
+            padding: 8px 12px;
+            background: #238636;
+            color: #ffffff;
+            border: 1px solid #2ea043;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: #2ea043;
+            border-color: #3fb950;
+        }
+
+        button.secondary {
+            background: #21262d;
+            color: #c9d1d9;
+            border-color: #444c56;
+        }
+
+        button.secondary:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .feedback {
+            padding: 15px;
+            background: #0d1117;
+            border-top: 1px solid #30363d;
+            max-height: 200px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback-success {
+            border-left: 4px solid #3fb950;
+            padding-left: 12px;
+        }
+
+        .feedback-error {
+            border-left: 4px solid #f85149;
+            padding-left: 12px;
+        }
+
+        .feedback-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .feedback-success .feedback-title {
+            color: #3fb950;
+        }
+
+        .feedback-error .feedback-title {
+            color: #f85149;
+        }
+
+        .feedback-list {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #e0e0e0;
+        }
+
+        .feedback-list li {
+            margin-left: 20px;
+            margin-bottom: 6px;
+        }
+
+        .model-answer {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #30363d;
+            font-size: 11px;
+        }
+
+        .model-answer-title {
+            color: #79c0ff;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .model-answer-code {
+            background: #1e1e2e;
+            padding: 8px;
+            border-radius: 4px;
+            color: #e0e0e0;
+            overflow-x: auto;
+            max-height: 100px;
+            font-size: 11px;
+        }
+
+        .help-content {
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .help-section {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 15px;
+        }
+
+        .help-section:last-child {
+            border-bottom: none;
+        }
+
+        .help-title {
+            color: #58a6ff;
+            font-weight: 600;
+            margin-bottom: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .help-title:hover {
+            color: #79c0ff;
+        }
+
+        .help-body {
+            display: none;
+            color: #e0e0e0;
+        }
+
+        .help-body.open {
+            display: block;
+        }
+
+        .help-code {
+            background: #1e1e2e;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow-x: auto;
+            font-size: 11px;
+            color: #a5d6ff;
+        }
+
+        .stats-content {
+            padding: 15px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #8b949e;
+        }
+
+        .stat-value {
+            color: #58a6ff;
+            font-weight: 600;
+        }
+
+        .mistakes-list {
+            background: #1e1e2e;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .mistake-item {
+            color: #e0e0e0;
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+
+        .mistake-count {
+            color: #f85149;
+            font-weight: 600;
+        }
+
+        button.export {
+            margin-top: 15px;
+        }
+
+        @media (max-width: 1024px) {
+            .right-panel {
+                width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .right-panel {
+                display: none;
+            }
+        }
+
+        @print {
+            body {
+                background: white;
+                color: black;
+            }
+            .main-panel, .right-panel {
+                border: none;
+            }
+            .buttons, .tabs {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-panel">
+            <div class="header">
+                <h1>Python While Loop Practice</h1>
+            </div>
+
+            <div class="question-box">
+                <h2>Question</h2>
+                <div class="question-text" id="questionText">Click "New Question" to start</div>
+            </div>
+
+            <div class="editor-container">
+                <div class="editor-wrapper">
+                    <div class="line-numbers" id="lineNumbers"></div>
+                    <div class="editor-area">
+                        <pre class="syntax-highlight" id="syntaxHighlight"></pre>
+                        <textarea class="editor-input" id="codeEditor" placeholder="Write your Python code here..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button onclick="newQuestion()">New Question</button>
+                <button class="secondary" onclick="resetCode()">Reset</button>
+                <button onclick="checkCode()">Check</button>
+            </div>
+
+            <div class="feedback" id="feedback"></div>
+        </div>
+
+        <div class="right-panel">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('help')">Help</button>
+                <button class="tab" onclick="switchTab('stats')">Stats</button>
+            </div>
+
+            <div id="help" class="panel-content active">
+                <div class="help-content">
+                    <div class="help-section">
+                        <div class="help-title" onclick="toggleHelp(this)">▶ Colour Legend</div>
+                        <div class="help-body">
+                            <p style="margin-bottom: 10px;"><strong>Syntax highlighting colours:</strong></p>
+                            <div style="font-size: 11px; line-height: 1.8;">
+                                <div style="margin-bottom: 6px;"><span class="hl-kw">while</span> <span style="color: #8b949e;">Control flow</span></div>
+                                <div style="margin-bottom: 6px;"><span class="hl-fn">print</span> <span style="color: #8b949e;">Built-in functions</span></div>
+                                <div style="margin-bottom: 6px;"><span class="hl-log">and</span> <span style="color: #8b949e;">Logical operators</span></div>
+                                <div style="margin-bottom: 6px;"><span class="hl-op">==</span> <span style="color: #8b949e;">Operators</span></div>
+                                <div style="margin-bottom: 6px;"><span class="hl-str">"text"</span> <span style="color: #8b949e;">Strings</span></div>
+                                <div style="margin-bottom: 6px;"><span class="hl-num">42</span> <span style="color: #8b949e;">Numbers</span></div>
+                                <div style="margin-bottom: 6px;"><span class="hl-bool">True</span> <span style="color: #8b949e;">Booleans</span></div>
+                                <div style="margin-bottom: 6px;"><span class="hl-cmt"># comment</span> <span style="color: #8b949e;">Comments</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-title" onclick="toggleHelp(this)">▶ While Syntax</div>
+                        <div class="help-body">
+                            <p style="margin-bottom: 8px;"><strong>Basic while loop:</strong></p>
+                            <div class="help-code">while condition:
+    # body (indented)
+    # update variable</div>
+                            <p style="margin: 8px 0;"><strong>Key points:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>Colon (:) after condition</li>
+                                <li>Body must be indented</li>
+                                <li>Condition must eventually become False</li>
+                                <li>Update variable in loop body</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-title" onclick="toggleHelp(this)">▶ Indentation</div>
+                        <div class="help-body">
+                            <p style="margin-bottom: 8px;"><strong>Python requires indentation!</strong></p>
+                            <div class="help-code">x = 0
+while x < 5:
+    print(x)  # 4 spaces
+    x = x + 1  # 4 spaces</div>
+                            <p style="margin: 8px 0;">Tab key inserts 4 spaces. After `:` press Enter for auto-indent.</p>
+                        </div>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-title" onclick="toggleHelp(this)">▶ Infinite Loops</div>
+                        <div class="help-body">
+                            <p style="margin-bottom: 8px;"><strong>Avoid infinite loops!</strong></p>
+                            <div class="help-code"># WRONG - infinite!
+while x < 5:
+    print(x)</div>
+                            <p style="margin-top: 8px;"><strong>Correct:</strong></p>
+                            <div class="help-code"># CORRECT
+while x < 5:
+    print(x)
+    x = x + 1  # Update!</div>
+                        </div>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-title" onclick="toggleHelp(this)">▶ While vs For</div>
+                        <div class="help-body">
+                            <p style="margin-bottom: 8px;"><strong>Use while when:</strong></p>
+                            <ul style="margin-left: 20px; margin-bottom: 8px;">
+                                <li>Unknown number of iterations</li>
+                                <li>Condition-based (user input, validation)</li>
+                                <li>Manual control needed</li>
+                            </ul>
+                            <p style="margin-bottom: 8px;"><strong>Use for when:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>Known number of iterations</li>
+                                <li>Looping through sequences</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="stats" class="panel-content">
+                <div class="stats-content">
+                    <div class="stat-item">
+                        <span class="stat-label">Attempted:</span>
+                        <span class="stat-value" id="statAttempted">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Correct:</span>
+                        <span class="stat-value" id="statCorrect">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Accuracy:</span>
+                        <span class="stat-value" id="statAccuracy">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Streak:</span>
+                        <span class="stat-value" id="statStreak">0</span>
+                    </div>
+
+                    <div style="margin-top: 15px; border-top: 1px solid #30363d; padding-top: 15px;">
+                        <div style="color: #58a6ff; font-weight: 600; margin-bottom: 8px;">Common Mistakes:</div>
+                        <div class="mistakes-list" id="mistakesList">
+                            <div class="mistake-item">None yet</div>
+                        </div>
+                    </div>
+
+                    <button class="export" onclick="exportReport()">Export Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =================================================================
+        // STATE
+        // =================================================================
+        let stats = {
+            attempted: 0,
+            correct: 0,
+            streak: 0,
+            mistakes: {}
+        };
+
+        let currentQuestion = null;
+        let attemptCount = 0;
+
+        // Load stats from localStorage
+        function loadStats() {
+            const saved = localStorage.getItem('whileLoopStats');
+            if (saved) {
+                stats = JSON.parse(saved);
+            }
+            updateStatsDisplay();
+        }
+
+        function saveStats() {
+            localStorage.setItem('whileLoopStats', JSON.stringify(stats));
+        }
+
+        // =================================================================
+        // QUESTION GENERATOR
+        // =================================================================
+        const questionTypes = [
+            {
+                name: 'Count Up',
+                generate() {
+                    const start = Math.floor(Math.random() * 5);
+                    const end = start + 3 + Math.floor(Math.random() * 7);
+                    const varNames = ['x', 'count', 'num', 'i', 'n'];
+                    const varName = varNames[Math.floor(Math.random() * varNames.length)];
+                    return {
+                        prompt: `Write a while loop that counts from ${start} to ${end} (inclusive) and prints each number.\n\nYou need:\n- A variable starting at ${start}\n- A while loop with the right condition\n- Print each number\n- Update the variable`,
+                        checks: {
+                            hasWhile: true,
+                            hasColon: true,
+                            hasIndent: true,
+                            hasPrint: true,
+                            hasUpdate: { var: null },
+                            needsValues: [String(start), String(end)]
+                        },
+                        modelAnswer: `${varName} = ${start}\nwhile ${varName} <= ${end}:\n    print(${varName})\n    ${varName} = ${varName} + 1`
+                    };
+                }
+            },
+            {
+                name: 'Count Down',
+                generate() {
+                    const start = 5 + Math.floor(Math.random() * 10);
+                    const varNames = ['x', 'count', 'n', 'num', 'i'];
+                    const varName = varNames[Math.floor(Math.random() * varNames.length)];
+                    return {
+                        prompt: `Write a while loop that counts down from ${start} to 0 and prints each number.\n\nYou need:\n- A variable starting at ${start}\n- A while loop that continues while the variable >= 0\n- Print each number\n- Decrease the variable each time`,
+                        checks: {
+                            hasWhile: true,
+                            hasColon: true,
+                            hasIndent: true,
+                            hasPrint: true,
+                            hasUpdate: { var: null },
+                            needsValues: [String(start)]
+                        },
+                        modelAnswer: `${varName} = ${start}\nwhile ${varName} >= 0:\n    print(${varName})\n    ${varName} = ${varName} - 1`
+                    };
+                }
+            },
+            {
+                name: 'Input Validation',
+                generate() {
+                    const names = ['age', 'score', 'temperature', 'mark', 'grade', 'rating'];
+                    const name = names[Math.floor(Math.random() * names.length)];
+                    const min = Math.floor(Math.random() * 5) * 10;
+                    const max = min + 50 + Math.floor(Math.random() * 50);
+                    return {
+                        prompt: `Write a while loop that asks the user to enter a ${name} between ${min} and ${max}.\nKeep asking until they enter a valid value, then print "Accepted!".\n\nYou need:\n- Use input() to get the value\n- A while loop that repeats while the value is out of range\n- Use "or" to check both boundaries`,
+                        checks: {
+                            hasWhile: true,
+                            hasColon: true,
+                            hasIndent: true,
+                            hasInput: true,
+                            hasOr: true,
+                            needsValues: [String(min), String(max)]
+                        },
+                        modelAnswer: `${name} = int(input("Enter ${name} (${min}-${max}): "))\nwhile ${name} < ${min} or ${name} > ${max}:\n    ${name} = int(input("Invalid! Try again: "))\nprint("Accepted!")`
+                    };
+                }
+            },
+            {
+                name: 'Running Total',
+                generate() {
+                    const num = 3 + Math.floor(Math.random() * 5);
+                    return {
+                        prompt: `Write a while loop that asks for ${num} numbers and prints the running total.\n\nYou need:\n- A total variable starting at 0\n- A counter variable\n- A while loop that runs ${num} times\n- Use input() to get each number\n- Add each number to total\n- Print the total at the end`,
+                        checks: {
+                            hasWhile: true,
+                            hasColon: true,
+                            hasIndent: true,
+                            hasInput: true,
+                            hasPrint: true,
+                            hasUpdate: { var: null },
+                            needsValues: [String(num)]
+                        },
+                        modelAnswer: `total = 0\ncount = 0\nwhile count < ${num}:\n    num = int(input("Enter number: "))\n    total = total + num\n    count = count + 1\nprint("Total:", total)`
+                    };
+                }
+            },
+            {
+                name: 'Guessing Game',
+                generate() {
+                    const secret = 10 + Math.floor(Math.random() * 90);
+                    return {
+                        prompt: `Write a guessing game. The secret number is ${secret}.\nKeep asking the user to guess until they get it right.\n\nYou need:\n- Store the secret number\n- A while loop that continues until guess matches secret\n- Use input() for guesses\n- Print "Too low" or "Too high" as hints\n- Print "Correct!" when they guess right`,
+                        checks: {
+                            hasWhile: true,
+                            hasColon: true,
+                            hasIndent: true,
+                            hasInput: true,
+                            hasComparison: true,
+                            needsValues: [String(secret)]
+                        },
+                        modelAnswer: `secret = ${secret}\nguess = -1\nwhile guess != secret:\n    guess = int(input("Guess the number: "))\n    if guess < secret:\n        print("Too low")\n    elif guess > secret:\n        print("Too high")\nprint("Correct!")`
+                    };
+                }
+            },
+            {
+                name: 'Menu Loop',
+                generate() {
+                    return {
+                        prompt: `Write a while loop that shows a menu (1-quit, 2-continue) and keeps looping until user chooses 1.`,
+                        starterCode: `choice = 0\nwhile choice != 1:\n    print("1. Quit")\n    print("2. Continue")\n    choice = int(input("Choose: "))\nprint("Goodbye!")`,
+                        checks: {
+                            hasWhile: true,
+                            hasColon: true,
+                            hasIndent: true,
+                            hasInput: true,
+                            hasCondition: '!= 1',
+                            conditionOK: true
+                        },
+                        modelAnswer: `choice = 0\nwhile choice != 1:\n    print("1. Quit")\n    print("2. Continue")\n    choice = int(input("Choose: "))\nprint("Goodbye!")`
+                    };
+                }
+            },
+            {
+                name: 'Multiplication Table',
+                generate() {
+                    const tableNum = 2 + Math.floor(Math.random() * 9);
+                    const times = 5 + Math.floor(Math.random() * 6);
+                    return {
+                        prompt: `Write a while loop that prints the ${tableNum} times table up to ${tableNum} × ${times}.`,
+                        starterCode: `count = 1\nwhile count <= ${times}:\n    print(f"${tableNum} × {count} = {${tableNum} * count}")\n    count = count + 1`,
+                        checks: {
+                            hasWhile: true,
+                            hasColon: true,
+                            hasIndent: true,
+                            hasMultiplication: true,
+                            hasUpdate: { var: 'count' },
+                            conditionOK: true
+                        },
+                        modelAnswer: `count = 1\nwhile count <= ${times}:\n    print(f"${tableNum} × {count} = {${tableNum} * count}")\n    count = count + 1`
+                    };
+                }
+            }
+        ];
+
+        function generateQuestion() {
+            const type = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+            const q = type.generate();
+            return {
+                type: type.name,
+                prompt: q.prompt,
+                starterCode: q.starterCode,
+                modelAnswer: q.modelAnswer,
+                checks: q.checks
+            };
+        }
+
+        // =================================================================
+        // CODE CHECKING
+        // =================================================================
+        function checkCode() {
+            if (!currentQuestion) {
+                alert('Generate a question first!');
+                return;
+            }
+
+            attemptCount++;
+            const code = document.getElementById('codeEditor').value.trim();
+            if (!code) {
+                alert('Write some code first!');
+                return;
+            }
+
+            stats.attempted++;
+            const result = validateCode(code, currentQuestion);
+            displayFeedback(result, code);
+
+            if (result.passed) {
+                stats.correct++;
+                stats.streak++;
+            } else {
+                stats.streak = 0;
+                if (result.errors.length > 0) {
+                    result.errors.forEach(e => {
+                        stats.mistakes[e] = (stats.mistakes[e] || 0) + 1;
+                    });
+                }
+            }
+
+            saveStats();
+            updateStatsDisplay();
+        }
+
+        function validateCode(code, question) {
+            const lines = code.split('\n');
+            const errors = [];
+            const warnings = [];
+
+            // Check 1: Has while keyword
+            if (!code.includes('while')) {
+                errors.push('Missing while loop');
+            }
+
+            // Check 2: Has colon after while
+            const whileLine = lines.find(l => l.trim().startsWith('while'));
+            if (whileLine && !whileLine.includes(':')) {
+                errors.push('Missing : after while condition');
+            }
+
+            // Check 3: Indentation in body
+            if (code.includes('while')) {
+                let foundIndent = false;
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].trim().startsWith('while')) {
+                        if (i + 1 < lines.length) {
+                            const nextLine = lines[i + 1];
+                            if (nextLine.startsWith('    ') || nextLine.startsWith('\t')) {
+                                foundIndent = true;
+                            }
+                        }
+                    }
+                }
+                if (!foundIndent && code.includes('while')) {
+                    errors.push('Loop body not indented');
+                }
+            }
+
+            // Check 4: Variable update (infinite loop detection)
+            let hasUpdate = false;
+            if (question.checks.hasUpdate) {
+                const varName = question.checks.hasUpdate.var;
+                const updatePattern = new RegExp(`${varName}\\s*=\\s*${varName}\\s*[+\\-]`, 'i');
+                if (updatePattern.test(code) || code.includes(`${varName} +=`) || code.includes(`${varName} -=`)) {
+                    hasUpdate = true;
+                }
+            }
+
+            if (question.checks.hasUpdate && !hasUpdate) {
+                warnings.push('Variable may not be updated (infinite loop risk)');
+            }
+
+            // Check 5: Basic syntax issues
+            if (code.includes(' = ') && code.includes('while')) {
+                // Check for == vs = confusion (simple heuristic)
+                const conditionMatch = code.match(/while\s+(.+?):/);
+                if (conditionMatch) {
+                    const condition = conditionMatch[1];
+                    if (condition.includes(' = ') && !condition.includes(' == ') && !condition.includes(' != ')) {
+                        errors.push('Condition uses = (assignment) instead of == (comparison)');
+                    }
+                }
+            }
+
+            // Check 6: Logic checks specific to question type
+            if (question.checks.hasOr && !code.includes('or')) {
+                warnings.push('Consider using "or" for range checking');
+            }
+
+            if (question.checks.hasInput && !code.includes('input')) {
+                errors.push('Missing input() call');
+            }
+
+            if (question.checks.hasComparison && !(/[<>!=]/.test(code))) {
+                errors.push('Missing comparison operators');
+            }
+
+            // Rough pass/fail
+            const passed = errors.length === 0 && warnings.length <= 1;
+
+            return {
+                passed,
+                errors,
+                warnings
+            };
+        }
+
+        function displayFeedback(result, code) {
+            const feedback = document.getElementById('feedback');
+            feedback.classList.add('show');
+
+            let html = '';
+            if (result.passed) {
+                html += '<div class="feedback-success">';
+                html += '<div class="feedback-title">✓ Correct!</div>';
+                html += '<div class="feedback-list">Great job! Your solution works.</div>';
+                html += '</div>';
+            } else {
+                html += '<div class="feedback-error">';
+                html += '<div class="feedback-title">✗ Not quite right</div>';
+                html += '<ul class="feedback-list">';
+                result.errors.forEach(e => html += `<li>${e}</li>`);
+                if (result.warnings.length > 0) {
+                    html += '<li style="color: #f0883e;"><strong>⚠ Warning:</strong> ' + result.warnings[0] + '</li>';
+                }
+                html += '</ul>';
+
+                if (attemptCount >= 2) {
+                    html += '<div class="model-answer">';
+                    html += '<div class="model-answer-title">Model Answer:</div>';
+                    html += '<div class="model-answer-code">' + escapeHtml(currentQuestion.modelAnswer) + '</div>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+
+            feedback.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // =================================================================
+        // SYNTAX HIGHLIGHTING (token-based, no cascading regex)
+        // =================================================================
+        const KEYWORDS = new Set([
+            'while','for','if','else','elif','def','return','break',
+            'continue','pass','try','except','finally','with','as',
+            'lambda','yield','assert','raise','del','global','nonlocal',
+            'class','from','import'
+        ]);
+        const BUILTINS = new Set([
+            'print','input','int','str','float','list','dict','set',
+            'tuple','len','range','sum','min','max','sorted','enumerate',
+            'zip','map','filter','abs','round','pow','all','any',
+            'isinstance','type','open','repr','ord','chr','hex','oct','bin'
+        ]);
+        const BOOLEANS = new Set(['True','False','None']);
+        const LOGICALS = new Set(['and','or','not','in','is']);
+
+        function tokenize(code) {
+            const tokens = [];
+            let i = 0;
+            while (i < code.length) {
+                // Comments
+                if (code[i] === '#') {
+                    let end = code.indexOf('\n', i);
+                    if (end === -1) end = code.length;
+                    tokens.push({ type: 'comment', text: code.slice(i, end) });
+                    i = end;
+                    continue;
+                }
+                // Strings
+                if (code[i] === '"' || code[i] === "'") {
+                    const q = code[i];
+                    let j = i + 1;
+                    while (j < code.length && code[j] !== q && code[j] !== '\n') {
+                        if (code[j] === '\\') j++;
+                        j++;
+                    }
+                    if (j < code.length && code[j] === q) j++;
+                    tokens.push({ type: 'string', text: code.slice(i, j) });
+                    i = j;
+                    continue;
+                }
+                // f-strings
+                if (code[i] === 'f' && (code[i+1] === '"' || code[i+1] === "'")) {
+                    const q = code[i+1];
+                    let j = i + 2;
+                    while (j < code.length && code[j] !== q && code[j] !== '\n') {
+                        if (code[j] === '\\') j++;
+                        j++;
+                    }
+                    if (j < code.length && code[j] === q) j++;
+                    tokens.push({ type: 'string', text: code.slice(i, j) });
+                    i = j;
+                    continue;
+                }
+                // Numbers
+                if (/\d/.test(code[i]) && (i === 0 || !/\w/.test(code[i-1]))) {
+                    let j = i;
+                    while (j < code.length && /[\d.]/.test(code[j])) j++;
+                    tokens.push({ type: 'number', text: code.slice(i, j) });
+                    i = j;
+                    continue;
+                }
+                // Words (identifiers / keywords)
+                if (/[a-zA-Z_]/.test(code[i])) {
+                    let j = i;
+                    while (j < code.length && /\w/.test(code[j])) j++;
+                    const word = code.slice(i, j);
+                    let type = 'plain';
+                    if (KEYWORDS.has(word)) type = 'keyword';
+                    else if (BUILTINS.has(word)) type = 'builtin';
+                    else if (BOOLEANS.has(word)) type = 'boolean';
+                    else if (LOGICALS.has(word)) type = 'logical';
+                    tokens.push({ type, text: word });
+                    i = j;
+                    continue;
+                }
+                // Multi-char operators
+                if (i + 1 < code.length) {
+                    const two = code.slice(i, i + 2);
+                    if (['==','!=','<=','>=','+=','-=','*=','/=','//','**'].includes(two)) {
+                        tokens.push({ type: 'operator', text: two });
+                        i += 2;
+                        continue;
+                    }
+                }
+                // Single-char operators
+                if ('=<>+-*/%'.includes(code[i])) {
+                    tokens.push({ type: 'operator', text: code[i] });
+                    i++;
+                    continue;
+                }
+                // Punctuation
+                if ('():[]{},.;:'.includes(code[i])) {
+                    tokens.push({ type: 'punctuation', text: code[i] });
+                    i++;
+                    continue;
+                }
+                // Everything else (whitespace, newlines, etc)
+                tokens.push({ type: 'plain', text: code[i] });
+                i++;
+            }
+            return tokens;
+        }
+
+        const CLASS_MAP = {
+            keyword: 'hl-kw',
+            builtin: 'hl-fn',
+            string: 'hl-str',
+            number: 'hl-num',
+            boolean: 'hl-bool',
+            comment: 'hl-cmt',
+            operator: 'hl-op',
+            logical: 'hl-log',
+            punctuation: 'hl-punc'
+        };
+
+        function updateSyntaxHighlight() {
+            const code = document.getElementById('codeEditor').value;
+            const highlight = document.getElementById('syntaxHighlight');
+            const tokens = tokenize(code);
+            let html = '';
+            for (const tok of tokens) {
+                const escaped = escapeHtml(tok.text);
+                const cls = CLASS_MAP[tok.type];
+                if (cls) {
+                    html += '<span class="' + cls + '">' + escaped + '</span>';
+                } else {
+                    html += escaped;
+                }
+            }
+            highlight.innerHTML = html;
+        }
+
+        // =================================================================
+        // LINE NUMBERS
+        // =================================================================
+        function updateLineNumbers() {
+            const code = document.getElementById('codeEditor').value;
+            const lines = code.split('\n').length;
+            const lineNumbers = document.getElementById('lineNumbers');
+            let html = '';
+            for (let i = 1; i <= lines; i++) {
+                html += i + '\n';
+            }
+            lineNumbers.textContent = html;
+        }
+
+        // =================================================================
+        // EDITOR EVENTS
+        // =================================================================
+        const editor = document.getElementById('codeEditor');
+
+        editor.addEventListener('keydown', (e) => {
+            // Tab → 4 spaces
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
+                editor.selectionStart = editor.selectionEnd = start + 4;
+                updateSyntaxHighlight();
+                updateLineNumbers();
+            }
+
+            // Enter → preserve indentation + add more if line ends with :
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const currentLine = editor.value.substring(0, start).split('\n').pop();
+                const indent = currentLine.match(/^(\s*)/)[0];
+                let newIndent = indent;
+                if (currentLine.trim().endsWith(':')) {
+                    newIndent += '    ';
+                }
+                editor.value = editor.value.substring(0, start) + '\n' + newIndent + editor.value.substring(start);
+                editor.selectionStart = editor.selectionEnd = start + 1 + newIndent.length;
+                updateSyntaxHighlight();
+                updateLineNumbers();
+            }
+        });
+
+        editor.addEventListener('input', () => {
+            updateSyntaxHighlight();
+            updateLineNumbers();
+        });
+
+        // Sync scroll — mirror textarea scroll position onto the highlight layer
+        editor.addEventListener('scroll', () => {
+            const hl = document.getElementById('syntaxHighlight');
+            hl.scrollTop = editor.scrollTop;
+            hl.scrollLeft = editor.scrollLeft;
+        });
+
+        // =================================================================
+        // UI FUNCTIONS
+        // =================================================================
+        function newQuestion() {
+            currentQuestion = generateQuestion();
+            attemptCount = 0;
+            document.getElementById('questionText').textContent = currentQuestion.prompt;
+            document.getElementById('codeEditor').value = currentQuestion.starterCode;
+            document.getElementById('feedback').classList.remove('show');
+            updateSyntaxHighlight();
+            updateLineNumbers();
+            editor.focus();
+        }
+
+        function resetCode() {
+            if (currentQuestion) {
+                document.getElementById('codeEditor').value = currentQuestion.starterCode;
+                document.getElementById('feedback').classList.remove('show');
+                updateSyntaxHighlight();
+                updateLineNumbers();
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab).classList.add('active');
+        }
+
+        function toggleHelp(el) {
+            el.parentElement.querySelector('.help-body').classList.toggle('open');
+            el.textContent = el.textContent.startsWith('▶') ? '▼ ' + el.textContent.substring(2) : '▶ ' + el.textContent.substring(2);
+        }
+
+        function updateStatsDisplay() {
+            const total = stats.attempted || 1;
+            const accuracy = Math.round((stats.correct / total) * 100);
+            document.getElementById('statAttempted').textContent = stats.attempted;
+            document.getElementById('statCorrect').textContent = stats.correct;
+            document.getElementById('statAccuracy').textContent = accuracy + '%';
+            document.getElementById('statStreak').textContent = stats.streak;
+
+            // Top mistakes
+            const sorted = Object.entries(stats.mistakes)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            let mistakesHtml = sorted.length > 0
+                ? sorted.map(([m, c]) => `<div class="mistake-item">${m} <span class="mistake-count">×${c}</span></div>`).join('')
+                : '<div class="mistake-item">None yet</div>';
+
+            document.getElementById('mistakesList').innerHTML = mistakesHtml;
+        }
+
+        function exportReport() {
+            const total = stats.attempted || 1;
+            const accuracy = Math.round((stats.correct / total) * 100);
+            const mistakes = Object.entries(stats.mistakes)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            let report = 'PYTHON WHILE LOOP PRACTICE REPORT\n';
+            report += '='.repeat(50) + '\n\n';
+            report += `Date: ${new Date().toLocaleDateString()}\n\n`;
+            report += 'STATISTICS:\n';
+            report += `  Attempted: ${stats.attempted}\n`;
+            report += `  Correct: ${stats.correct}\n`;
+            report += `  Accuracy: ${accuracy}%\n`;
+            report += `  Best Streak: ${stats.streak}\n\n`;
+
+            if (mistakes.length > 0) {
+                report += 'TOP MISTAKES:\n';
+                mistakes.forEach(([m, c]) => {
+                    report += `  • ${m}: ${c} time${c > 1 ? 's' : ''}\n`;
+                });
+                report += '\n';
+            }
+
+            report += 'NEXT STEPS:\n';
+            if (accuracy < 50) {
+                report += '  • Review while loop syntax\n';
+                report += '  • Focus on indentation rules\n';
+                report += '  • Practice variable updating\n';
+            } else if (accuracy < 80) {
+                report += '  • Pay attention to edge cases\n';
+                report += '  • Review loop conditions\n';
+                report += '  • Test for infinite loops\n';
+            } else {
+                report += '  • Great work! Try more complex patterns\n';
+                report += '  • Explore nested loops\n';
+                report += '  • Challenge: combine with functions\n';
+            }
+
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'while_loop_report.txt';
+            a.click();
+        }
+
+        // =================================================================
+        // INIT
+        // =================================================================
+        window.addEventListener('load', () => {
+            loadStats();
+            newQuestion();
+        });
+    </script>
+</body>
+</html>

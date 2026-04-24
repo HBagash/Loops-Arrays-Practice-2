@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python While Loop Practice IDE</title>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+
+    <!-- html2canvas for Exporting PNG Reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Pyodide for actual Python Execution -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --accent: #06b6d4;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+            --success: #10b981;
+            --font-main: 'Outfit', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-main);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--text-main);
+            background: var(--primary);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Practice Area */
+        .question-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .editor-wrapper {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 1.5rem;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .CodeMirror, .CodeMirror * {
+            font-family: var(--font-code) !important;
+            font-size: 15px;
+            font-variant-ligatures: none !important;
+            font-feature-settings: "liga" 0, "calt" 0 !important;
+        }
+
+        .CodeMirror {
+            height: 300px;
+            padding: 10px 0;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font-main);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-run {
+            background: var(--primary);
+            color: white;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-run:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-next {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-next:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-report {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-report:hover {
+            background: rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .console {
+            background: #000;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--font-code);
+            font-size: 0.95rem;
+            min-height: 100px;
+            color: #fff;
+            border: 1px solid var(--glass-border);
+            white-space: pre-wrap;
+        }
+
+        .msg-error {
+            color: var(--error);
+        }
+
+        .msg-success {
+            color: var(--success);
+        }
+
+        .msg-info {
+            color: var(--accent);
+        }
+
+        .help-section {
+            line-height: 1.6;
+        }
+
+        .help-section h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .help-section pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: var(--font-code);
+            color: #d1d5db;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: var(--font-code);
+            padding: 2px 5px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .code-var { color: var(--accent); }
+        .code-val { color: var(--success); }
+
+        /* Report Card Output Container (Rendered to canvas, kept visually hidden from layout but parsed by html2canvas) */
+        #report-export-container {
+            position: absolute;
+            left: -9999px;
+            /* keep off screen */
+            top: 0;
+            width: 800px;
+            /* Fixed width for standard document size */
+            background: #ffffff;
+            color: #1e293b;
+            padding: 3rem;
+            font-family: var(--font-main);
+            border-radius: 12px;
+        }
+
+        .report-header {
+            text-align: center;
+            border-bottom: 3px solid #cbd5e1;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .report-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-subtitle {
+            font-size: 1.2rem;
+            color: #64748b;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .metric-title {
+            font-size: 1.1rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 0.5rem;
+        }
+
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        .breakdown-table th {
+            background: #f1f5f9;
+            padding: 1rem;
+            text-align: left;
+            color: #475569;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .breakdown-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .status-chip {
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .chip-good {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .chip-warning {
+            background: #fef08a;
+            color: #854d0e;
+        }
+
+        .chip-bad {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .feedback-box {
+            margin-top: 3rem;
+            background: #eff6ff;
+            border-left: 6px solid #3b82f6;
+            padding: 1.5rem;
+            border-radius: 0 12px 12px 0;
+            font-size: 1.1rem;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+
+        /* Sub-tab Navigation for Help Section */
+        .sub-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .sub-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.4rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .sub-tab-btn.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        /* Scaffolding Styles */
+        .step-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed var(--glass-border);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .step-number {
+            background: var(--accent);
+            color: #000;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Python While Loop IDE</h1>
+            <p>Practice exam-style Python loops with instant feedback</p>
+        </header>
+
+        <div class="glass-panel">
+            <div class="tabs">
+                <button class="tab-btn active" id="btn-while" onclick="switchTopic('while')">While Loops</button>
+                <button class="tab-btn" id="btn-arrays" onclick="switchTopic('arrays')">Arrays Practice</button>
+                <button class="tab-btn" id="btn-help" onclick="switchTab('help')">Help & Syntax</button>
+                <button class="tab-btn" id="btn-report" onclick="switchTab('report')">Analytics Report</button>
+            </div>
+
+            <!-- Gamification Stats -->
+            <div
+                style="display: flex; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
+                <div
+                    style="flex: 1; background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">SCORE</span>
+                    <span id="stat-score" style="color: var(--accent); font-size: 1.4rem; font-weight: 700;">0</span>
+                </div>
+                <div
+                    style="flex: 1; background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">STREAK</span>
+                    <span id="stat-streak" style="color: #fbbf24; font-size: 1.4rem; font-weight: 700;">0 🔥</span>
+                </div>
+            </div>
+
+            <!-- Practice Area (Shared by Topics) -->
+            <section id="tab-practice" class="tab-content active">
+                <div id="topic-badge"
+                    style="display:inline-block; padding: 2px 10px; border-radius: 4px; background: var(--accent); color: #000; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase;">
+                    Topic: While Loops</div>
+                <div class="question-box" id="question-text">
+                    Loading question...
+                </div>
+
+                <div class="editor-wrapper">
+                    <textarea id="code-editor"></textarea>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-run" onclick="checkCode()">Check Logic</button>
+                    <button class="btn btn-next" onclick="loadNextQuestion()">Next Question ↻</button>
+                    <button class="btn btn-report" onclick="exportReport()">📥 Export Report (PNG)</button>
+                </div>
+
+                <div class="console" id="console-output">
+                    <span class="msg-info">Awaiting code submission...</span>
+                </div>
+            </section>
+
+            <!-- Help Tab -->
+            <!-- Help Section (Preserving User's exact layout but adding Sub-Tabs) -->
+            <section id="tab-help" class="tab-content help-section">
+                <div class="sub-tabs">
+                    <button class="sub-tab-btn active" id="sub-btn-quick" onclick="switchSubTab('help-quick')">Quick Reference</button>
+                    <button class="sub-tab-btn" id="sub-btn-loops" onclick="switchSubTab('help-loops')">Solving Loops</button>
+                    <button class="sub-tab-btn" id="sub-btn-arrays" onclick="switchSubTab('help-arrays')">Solving Arrays</button>
+                </div>
+
+                <!-- 1. QUICK REFERENCE (Your Existing Content) -->
+                <div id="sub-help-quick" class="sub-help-content active">
+                    <h3 style="margin-top: 0;">While Loop Cheat Sheet</h3>
+                    <p>A loop runs <strong>while</strong> a condition is <code>True</code>.</p>
+    
+                    <div
+                        style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 12px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+                        <code style="font-family: var(--font-code); line-height: 1.8; font-size: 1.1rem;">
+                            <span style="color: #6272a4;"># 1. Setup variable</span><br>
+                            <span style="color: #50fa7b;">count</span> = <span style="color: #bd93f9;">0</span><br><br>
+                            
+                            <span style="color: #ff79c6;">while</span> <span style="color: #50fa7b;">count</span> < <span style="color: #bd93f9;">5</span><span style="color: #ff79c6;">:</span> <span style="color: #6272a4;"># 2. Condition & Colon</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f1fa8c;">print</span>(<span style="color: #f1fa8c;">"Looping!"</span>) <span style="color: #6272a4;"># 3. Indented Action</span><br><br>
+                            
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #50fa7b;">count</span> += <span style="color: #bd93f9;">1</span> <span style="color: #6272a4;"># 4. Update (Avoid Infinite Loop!)</span>
+                        </code>
+                    </div>
+    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+                        <div
+                            style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--success);">
+                            <h4 style="color: var(--success); margin-bottom: 0.5rem;">The Must-Haves</h4>
+                            <ul style="list-style: none; font-size: 0.95rem;">
+                                <li>✅ <strong>":"</strong> After the condition</li>
+                                <li>✅ <strong>Tab key</strong> to indent code</li>
+                                <li>✅ <strong>Update</strong> the counter</li>
+                            </ul>
+                        </div>
+                        <div
+                            style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--error);">
+                            <h4 style="color: var(--error); margin-bottom: 0.5rem;">Avoid These</h4>
+                            <ul style="list-style: none; font-size: 0.95rem;">
+                                <li>❌ Forgetting the colon</li>
+                                <li>❌ Un-indented code</li>
+                                <li>❌ Infinite loops</li>
+                            </ul>
+                        </div>
+                    </div>
+    
+                    <hr style="margin: 2rem 0; border: 0; border-top: 1px solid var(--glass-border);">
+    
+                    <h3>Arrays Cheat Sheet</h3>
+                    <p>Arrays (Lists) store multiple items in one variable.</p>
+    
+                    <div
+                        style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 12px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+                        <code style="font-family: var(--font-code); line-height: 1.8; font-size: 1.1rem;">
+                            <span style="color: #6272a4;"># Create a list</span><br>
+                            <span style="color: #50fa7b;">names</span> = [<span style="color: #f1fa8c;">"A"</span>, <span style="color: #f1fa8c;">"B"</span>, <span style="color: #f1fa8c;">"C"</span>]<br><br>
+                            
+                            <span style="color: #6272a4;"># Access index 0 (which is "A")</span><br>
+                            <span style="color: #f1fa8c;">print</span>(<span style="color: #50fa7b;">names</span>[<span style="color: #bd93f9;">0</span>])<br><br>
+                            
+                            <span style="color: #6272a4;"># Iterating with a while loop</span><br>
+                            <span style="color: #50fa7b;">i</span> = <span style="color: #bd93f9;">0</span><br>
+                            <span style="color: #ff79c6;">while</span> <span style="color: #50fa7b;">i</span> < <span style="color: #f1fa8c;">len</span>(<span style="color: #50fa7b;">names</span>)<span style="color: #ff79c6;">:</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f1fa8c;">print</span>(<span style="color: #50fa7b;">names</span>[<span style="color: #50fa7b;">i</span>])<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #50fa7b;">i</span> += <span style="color: #bd93f9;">1</span>
+                        </code>
+                    </div>
+    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+                        <div
+                            style="background: rgba(139, 92, 246, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--primary);">
+                            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">The Key Rules</h4>
+                            <ul style="list-style: none; font-size: 0.95rem;">
+                                <li>📍 Indexing starts at <strong>0</strong></li>
+                                <li>📦 Use <strong>[ ]</strong> for indexes</li>
+                                <li>📏 Use <strong>len()</strong> for size</li>
+                            </ul>
+                        </div>
+                        <div
+                            style="background: rgba(6, 182, 212, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent);">
+                            <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Useful Methods</h4>
+                            <ul style="list-style: none; font-size: 0.95rem;">
+                                <li>➕ <strong>.append(item)</strong></li>
+                                <li>🔄 <strong>list[i] = new</strong></li>
+                                <li>🔢 <strong>range(len(list))</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. SOLVING LOOPS (Interactive Game Tutorial) -->
+                <div id="sub-help-loops" class="sub-help-content" style="display: none;">
+                    <h3 style="margin-top: 0; color: var(--accent);">Interactive Loop Missions</h3>
+                    
+                    <div style="margin-bottom: 1rem; display: flex; gap: 10px;">
+                        <button class="tutorial-lvl-btn active" id="btn-loop-lvl1" onclick="switchTutMission('loops', 1)">Mission 1: Count Up</button>
+                        <button class="tutorial-lvl-btn" id="btn-loop-lvl2" onclick="switchTutMission('loops', 2)">Mission 2: Input Loop</button>
+                    </div>
+
+                    <p id="tut-loop-goal" style="margin-bottom: 1rem; font-size: 0.9rem;">Goal: <strong>"Print the numbers 0 to 4"</strong>.</p>
+                    
+                    <div style="background: rgba(0,0,0,0.3); border: 2px solid var(--glass-border); border-radius: 12px; overflow: hidden; margin-bottom: 1rem;">
+                        <div id="tutorial-step-hint" style="background: var(--accent); color: #000; padding: 10px; font-weight: 700; font-size: 0.9rem;">
+                            Step 1: Create a variable called 'count' and set it to 0. (Initialisation)
+                        </div>
+                        <div id="tut-editor-loops" style="height: 120px;"></div>
+                        <div style="padding: 10px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border);">
+                            <button class="btn" style="padding: 4px 12px; font-size: 0.8rem; background: var(--success); color: #000;" onclick="verifyTutorialStep('loops')">Verify Step</button>
+                            <span id="tutorial-status" style="font-size: 0.8rem; color: var(--text-muted);">Awaiting code...</span>
+                        </div>
+                    </div>
+
+                    <div id="tutorial-progress" style="display: flex; gap: 5px;">
+                        <div class="tut-dot active"></div>
+                        <div class="tut-dot"></div>
+                        <div class="tut-dot"></div>
+                        <div class="tut-dot"></div>
+                    </div>
+
+                    <style>
+                        .tutorial-lvl-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+                        .tutorial-lvl-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+                        .tut-dot, .tut-dot-arr { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+                        .tut-dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+                        .tut-dot-arr.active { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+                        .tut-dot.done, .tut-dot-arr.done { background: var(--success); }
+                        
+                        #sub-help-loops .CodeMirror, 
+                        #sub-help-loops .CodeMirror *,
+                        #sub-help-arrays .CodeMirror,
+                        #sub-help-arrays .CodeMirror * {
+                            height: auto;
+                            font-size: 14px;
+                            background: transparent !important;
+                            font-variant-ligatures: none !important;
+                            font-feature-settings: "liga" 0, "calt" 0 !important;
+                        }
+                        #sub-help-loops .CodeMirror, #sub-help-arrays .CodeMirror { height: 120px; }
+                    </style>
+                </div>
+
+                <!-- 3. SOLVING ARRAYS (Interactive Game Tutorial) -->
+                <div id="sub-help-arrays" class="sub-help-content" style="display: none;">
+                    <h3 style="margin-top: 0; color: var(--primary);">Interactive Array Missions</h3>
+                    
+                    <div style="margin-bottom: 1rem; display: flex; gap: 10px;">
+                        <button class="tutorial-lvl-btn active" id="btn-arr-lvl1" onclick="switchTutMission('arrays', 1)">Mission 1: Indexing</button>
+                        <button class="tutorial-lvl-btn" id="btn-arr-lvl2" onclick="switchTutMission('arrays', 2)">Mission 2: Populate</button>
+                    </div>
+
+                    <p id="tut-arr-goal" style="margin-bottom: 1rem; font-size: 0.9rem;">Goal: <strong>"Define 'fruits' as ['Apple', 'Pear'] and print item 0."</strong></p>
+
+                    <div style="background: rgba(0,0,0,0.3); border: 2px solid var(--glass-border); border-radius: 12px; overflow: hidden; margin-bottom: 1rem;">
+                        <div id="tut-array-hint" style="background: var(--primary); color: #fff; padding: 10px; font-weight: 700; font-size: 0.9rem;">
+                            Step 1: Define the list: fruits = ["Apple", "Pear"]
+                        </div>
+                        <div id="tut-editor-arrays" style="height: 120px;"></div>
+                        <div style="padding: 10px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border);">
+                            <button class="btn" style="padding: 4px 12px; font-size: 0.8rem; background: var(--success); color: #000;" onclick="verifyTutorialStep('arrays')">Verify Step</button>
+                            <span id="tutorial-status-array" style="font-size: 0.8rem; color: var(--text-muted);">Awaiting code...</span>
+                        </div>
+                    </div>
+
+                    <div id="tutorial-progress-array" style="display: flex; gap: 5px;">
+                        <div class="tut-dot-arr active"></div>
+                        <div class="tut-dot-arr"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Report Tab -->
+            <section id="tab-report" class="tab-content" style="padding: 1rem;">
+                <h2 style="color: var(--accent); margin-bottom: 1rem;">Live Session Analytics</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">This tab shows your current progress. To download an official certificate of your session, use the <strong>"Export Report"</strong> button in the Practice tab.</p>
+                
+                <div class="glass-panel" style="background: rgba(255,255,255,0.05); text-align: center; padding: 2rem;">
+                    <p style="font-size: 1.2rem; color: var(--text-main);">Visit the <strong>Practice</strong> tab and click <strong>Check Logic</strong> to populate your analytics data!</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Hidden Report Template -->
+    <div id="report-export-container">
+        <div class="report-header">
+            <div class="report-title">Python Practice Report</div>
+            <div id="report-student-name" style="font-size: 1.2rem; font-weight: 600; color: #6366f1; margin: 0.5rem 0;">Student: [Name]</div>
+            <div class="report-subtitle" id="report-date">Target: While Loops • GCSE Level</div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Questions Attempted</div>
+                <div class="metric-value" id="rep-attempted">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Success Score Estimate</div>
+                <div class="metric-value" id="rep-score" style="color: #059669;">100%</div>
+            </div>
+        </div>
+
+        <h3 style="color: #475569; margin-bottom: 1rem;">Mistakes Tracking</h3>
+        <table class="breakdown-table">
+            <thead>
+                <tr>
+                    <th style="width: 60%">Exam Criteria</th>
+                    <th>Count</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="rep-table-body">
+                <!-- Dynamically populated -->
+            </tbody>
+        </table>
+
+        <div class="feedback-box" id="rep-feedback">
+            Feedback will appear here.
+        </div>
+    </div>
+
+    <!-- CodeMirror Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        // Tab & Topic Navigation
+        let currentTopic = 'while';
+        let pyodide = null;
+
+        // Initialize Pyodide on load
+        async function setupPyodide() {
+            logConsole("Initializing Python Engine...", "info");
+            try {
+                pyodide = await loadPyodide();
+                logConsole("Python Engine Ready! Write your code above.", "success");
+            } catch (err) {
+                logConsole("Failed to load Python engine. Please check your internet connection.", "error");
+            }
+        }
+        setupPyodide();
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('tab-' + tab).classList.add('active');
+            if (tab === 'help') {
+                document.getElementById('btn-help').classList.add('active');
+                switchSubTab('help-quick'); // Default to quick reference
+            } else if (tab === 'report') {
+                document.getElementById('btn-report').classList.add('active');
+            } else {
+                document.getElementById('btn-' + currentTopic).classList.add('active');
+            }
+        }
+
+        function switchSubTab(subTabId) {
+            // Hide all sub-help content
+            document.querySelectorAll('.sub-help-content').forEach(el => {
+                el.classList.remove('active');
+                el.style.display = 'none';
+            });
+            // Reset all sub-tab buttons
+            document.querySelectorAll('.sub-tab-btn').forEach(el => el.classList.remove('active'));
+
+            // Show selected
+            const selected = document.getElementById('sub-' + subTabId);
+            selected.classList.add('active');
+            selected.style.display = 'block';
+
+            // Highlight button
+            if (subTabId === 'help-quick') document.getElementById('sub-btn-quick').classList.add('active');
+            if (subTabId === 'help-loops') {
+                document.getElementById('sub-btn-loops').classList.add('active');
+                if(CMTutLoop) CMTutLoop.refresh();
+            }
+            if (subTabId === 'help-arrays') {
+                document.getElementById('sub-btn-arrays').classList.add('active');
+                if(CMTutArray) CMTutArray.refresh();
+            }
+        }
+
+        function switchTopic(topic) {
+            // Save current state before switching
+            if (topicState[currentTopic]) {
+                topicState[currentTopic].code = editor.getValue();
+            }
+
+            currentTopic = topic;
+            switchTab('practice');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('btn-' + topic).classList.add('active');
+            
+            const badge = document.getElementById('topic-badge');
+            badge.innerText = `Topic: ${topic === 'while' ? 'While Loops' : 'Arrays'}`;
+            badge.style.background = topic === 'while' ? 'var(--accent)' : 'var(--primary)';
+
+            // If no question exists yet for this topic, generate one
+            if (!topicState[topic].question) {
+                loadNextQuestion();
+            } else {
+                // Restore existing state
+                document.getElementById('question-text').innerHTML = topicState[topic].question;
+                editor.setValue(topicState[topic].code);
+            }
+        }
+
+        const topicState = {
+            while: { question: "", code: "", solved: false, meta: null },
+            arrays: { question: "", code: "", solved: false, meta: null }
+        };
+
+        const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+            mode: "python",
+            theme: "dracula",
+            lineNumbers: true,
+            matchBrackets: true,
+            indentUnit: 4,
+            tabSize: 4,
+            indentWithTabs: true,
+            extraKeys: {
+                "Tab": function (cm) { cm.replaceSelection("    "); }
+            }
+        });
+
+        const sessionStats = {
+            questionsAttempted: 0,
+            checksRun: 0,
+            score: 0,
+            streak: 0,
+            mistakes: {
+                missingWhile: 0,
+                missingColon: 0,
+                badIndent: 0,
+                missingIterator: 0,
+                arrayBracket: 0,
+                arrayIndex: 0,
+                arrayMethod: 0,
+                assignVsComp: 0,
+                compMissing: 0,
+                syntaxError: 0,
+                logicalFlip: 0,
+                offByOne: 0,
+                inputConversion: 0,
+                arrayOOB: 0,
+                namingMismatched: 0,
+                valueAsIndex: 0
+            }
+        };
+
+        // Local Storage Persistence
+        function saveProgress() {
+            const data = {
+                score: sessionStats.score,
+                streak: sessionStats.streak,
+                mistakes: sessionStats.mistakes
+            };
+            localStorage.setItem('ocr_py_practice_data', JSON.stringify(data));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('ocr_py_practice_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                sessionStats.score = data.score || 0;
+                sessionStats.streak = data.streak || 0;
+                sessionStats.mistakes = data.mistakes || sessionStats.mistakes;
+                updateStatsUI();
+            }
+        }
+
+        function updateStatsUI() {
+            document.getElementById('stat-score').innerText = sessionStats.score;
+            document.getElementById('stat-streak').innerText = `${sessionStats.streak} 🔥`;
+
+            // Add a little pop animation to the streak when it grows
+            const streakEl = document.getElementById('stat-streak');
+            streakEl.style.transform = 'scale(1.2)';
+            setTimeout(() => streakEl.style.transform = 'scale(1)', 200);
+        }
+
+        function generateRandomQuestion() {
+            if (currentTopic === 'while') {
+                const types = ["countUp", "countDown", "sum", "inputSim", "multiplication"];
+                const type = types[Math.floor(Math.random() * types.length)];
+                if (type === "countUp") {
+                    const end = Math.floor(Math.random() * 20) + 5;
+                    const varName = ["x", "i", "count", "num"][Math.floor(Math.random() * 4)];
+                    const expectedOutput = Array.from({length: end}, (_, i) => i + 1).join('\n') + '\n';
+                    return {
+                        html: `Create a Python program with a <code class="code-var">while</code> loop. Initialize <code class="code-var">${varName}</code> to <code class="code-val">1</code> and output every number from 1 up to <strong class="code-val">${end}</strong> inclusive.`,
+                        meta: { type: "countUp", varName, end, expectedOutput }
+                    };
+                } else if (type === "countDown") {
+                    const start = Math.floor(Math.random() * 50) + 10;
+                    const varName = ["lives", "timer", "count", "ammo"][Math.floor(Math.random() * 4)];
+                    const expectedOutput = Array.from({length: start}, (_, i) => start - i).join('\n') + '\n';
+                    return {
+                        html: `Create a countdown timer. Initialise <code class="code-var">${varName}</code> to <strong class="code-val">${start}</strong>. Use a <code class="code-var">while</code> loop to output the value and decrease it by <code class="code-val">1</code> each time until it reaches <code class="code-val">0</code>.`,
+                        meta: { type: "countDown", varName, start, expectedOutput }
+                    };
+                } else if (type === "sum") {
+                    const limit = Math.floor(Math.random() * 100) + 10;
+                    const expectedSum = (limit * (limit + 1)) / 2;
+                    return {
+                        html: `Write a program to calculate the sum of all integers from <code class="code-val">1</code> to <strong class="code-val">${limit}</strong>. Initialize <code class="code-var">total</code> to <code class="code-val">0</code> and <code class="code-var">num</code> to <code class="code-val">1</code>, then use a <code class="code-var">while</code> loop to find the sum and print it at the end.`,
+                        meta: { type: "sum", limit, expectedOutput: expectedSum.toString() + '\n' }
+                    };
+                } else if (type === "inputSim") {
+                    const words = ["secret", "password123", "exam2024", "computing"];
+                    const pass = words[Math.floor(Math.random() * words.length)];
+                    return {
+                        html: `Design a Python program that uses a <code class="code-var">while</code> loop to repeatedly ask for a password using <code class="code-var">input()</code>. The loop should continue until the user enters exactly <strong class="code-val">'${pass}'</strong>. Once correct, print 'Access Granted'.`,
+                        meta: { type: "inputSim", password: pass }
+                    };
+                } else if (type === "multiplication") {
+                    const target = [100, 500, 1000, 2048][Math.floor(Math.random() * 4)];
+                    let expectedParts = [];
+                    let v = 2;
+                    while (v <= target) {
+                        expectedParts.push(v.toString());
+                        v *= 2;
+                    }
+                    return {
+                        html: `Write a program that initializes <code class="code-var">x</code> to <code class="code-val">2</code>. Using a <code class="code-var">while</code> loop, double the value of <code class="code-var">x</code> repeatedly as long as it is less than or equal to <strong class="code-val">${target}</strong>. Print the value of <code class="code-var">x</code> at each step before it doubles.`,
+                        meta: { type: "multiplication", target, expectedOutput: expectedParts.join('\n') + '\n' }
+                    };
+                }
+            } else {
+                const types = ["access", "update", "length", "append", "iterate"];
+                const type = types[Math.floor(Math.random() * types.length)];
+                const names = ["scores", "items", "data", "names", "users"];
+                const listName = names[Math.floor(Math.random() * names.length)];
+                if (type === "access") {
+                    const idx = Math.floor(Math.random() * 3);
+                    const items = ["A", "B", "C", "D"];
+                    return {
+                        html: `Given an array <code class="code-var">${listName}</code> = [<code class="code-val">"A", "B", "C", "D"</code>], write a line of code to print the item at <strong class="code-val">index ${idx}</strong>.`,
+                        meta: { type: "access", listName, idx, expectedOutput: items[idx] + '\n', setupCode: `${listName} = ["A", "B", "C", "D"]\n` }
+                    };
+                } else if (type === "update") {
+                    const idx = Math.floor(Math.random() * 3);
+                    return {
+                        html: `You have high scores: <code class="code-var">scores</code> = [<code class="code-val">10, 20, 30</code>]. Change the value at <strong class="code-val">index ${idx}</strong> to be <strong class="code-val">50</strong>.`,
+                        meta: { type: "update", listName: "scores", idx, newValue: 50, setupCode: "scores = [10, 20, 30]\n", verifyCode: `scores[${idx}]` }
+                    };
+                } else if (type === "length") {
+                    return {
+                        html: `Create an array called <code class="code-var">inventory</code> containing <code class="code-val">3</code> items. Write a line of code that prints the **length** of the <code class="code-var">inventory</code> array.`,
+                        meta: { type: "length", expectedOutput: "3\n" }
+                    };
+                } else if (type === "append") {
+                    return {
+                        html: `You have a list: <code class="code-var">users</code> = [<code class="code-val">"Alice", "Bob"</code>]. Write a line of Python code to **add** the name <code class="code-val">"Charlie"</code> to the end of the list.`,
+                        meta: { type: "append", setupCode: 'users = ["Alice", "Bob"]\n', verifyCode: 'users', expectedList: ["Alice", "Bob", "Charlie"] }
+                    };
+                } else if (type === "iterate") {
+                    return {
+                        html: `Create an array of <code class="code-val">5</code> numbers. Use a <code class="code-var">while</code> loop and the <code class="code-var">len()</code> function to iterate through the array and print every number inside.`,
+                        meta: { type: "iterate", expectedLineCount: 5 }
+                    };
+                }
+            }
+        }
+
+        function loadNextQuestion() {
+            // New Penalization: If they SKIP an unsolved question, they lose their streak!
+            if (topicState[currentTopic].question && !topicState[currentTopic].solved && editor.getValue().trim() !== "") {
+                sessionStats.streak = 0;
+            }
+
+            sessionStats.questionsAttempted++;
+            const generated = generateRandomQuestion();
+            const newQ = `<strong>Question ${sessionStats.questionsAttempted}:</strong> ${generated.html}`;
+
+            topicState[currentTopic].question = newQ;
+            topicState[currentTopic].code = "";
+            topicState[currentTopic].solved = false; // Reset solved status
+            topicState[currentTopic].meta = generated.meta;
+
+            document.getElementById('question-text').innerHTML = newQ;
+            editor.setValue("");
+            logConsole("Ready for next question.", "info");
+            updateStatsUI();
+        }
+
+        async function checkCode() {
+            if (!pyodide) {
+                logConsole("Python Engine is still loading...", "info");
+                return;
+            }
+
+            const code = editor.getValue();
+            let errors = [];
+            sessionStats.checksRun++;
+
+            if (!code.trim()) {
+                logConsole("Please write some code before checking!", "error");
+                return;
+            }
+            
+            // 1. ADVANCED STATIC ANALYSIS
+            const lines = code.split('\n');
+            const meta = topicState[currentTopic].meta;
+            lines.forEach((line, i) => {
+                const trimmed = line.trim();
+                // Assignment vs Comparison — only flag if the question asks to assign/update and user used == for that
+                if (trimmed.includes('==') && !trimmed.includes('if ') && !trimmed.includes('while ') && !trimmed.includes('print(')) {
+                    const qText = document.getElementById('question-text').innerText.toLowerCase();
+                    if (qText.includes('change the value') || qText.includes('set') || qText.includes('initialize')) {
+                        errors.push(`[Line ${i + 1}] You used '==' which checks values. Use '=' to assign/update a variable.`);
+                        sessionStats.mistakes.assignVsComp++;
+                    }
+                }
+
+                // Logical Flip (> vs <)
+                if (trimmed.includes('while')) {
+                    const qText = document.getElementById('question-text').innerText.toLowerCase();
+                    if (qText.includes('up to') && trimmed.includes('>')) {
+                        errors.push(`[Line ${i + 1}] Check your condition. Counting UP usually uses '<' or '<='.`);
+                        sessionStats.mistakes.logicalFlip++;
+                    } else if (qText.includes('down to') && trimmed.includes('<')) {
+                        errors.push(`[Line ${i + 1}] Check your condition. Counting DOWN usually uses '>' or '>='.`);
+                        sessionStats.mistakes.logicalFlip++;
+                    }
+                }
+
+                // Input conversion (String vs Int)
+                if (trimmed.includes('input(') && !trimmed.includes('int(')) {
+                    const qText = document.getElementById('question-text').innerText.toLowerCase();
+                    if (qText.includes('number') || qText.includes('sum') || qText.includes('index')) {
+                        errors.push(`[Line ${i + 1}] Hint: when using inputs for numbers or math, remember to wrap it in int(): e.g., int(input())`);
+                        sessionStats.mistakes.inputConversion++;
+                    }
+                }
+
+                // Empty While
+                if (trimmed.startsWith('while ')) {
+                    const condition = trimmed.substring(6).replace(':', '').trim();
+                    if (!condition || condition === "") {
+                        errors.push(`[Line ${i + 1}] Your 'while' loop is missing a condition.`);
+                        sessionStats.mistakes.compMissing++;
+                    }
+                }
+            });
+
+            // 2. WHILE LOOP SPECIFIC RULES (Structure)
+            if (currentTopic === 'while') {
+                let hasWhile = false;
+                let hasColon = false;
+                let hasIndent = false;
+                let hasIterator = false;
+
+                const qText = document.getElementById('question-text').innerText.toLowerCase();
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line.includes('while ')) {
+                        hasWhile = true;
+                        if (line.trim().endsWith(':')) hasColon = true;
+                        if (i + 1 < lines.length) {
+                            const nextLine = lines[i + 1];
+                            if (nextLine.trim() !== '' && (nextLine.startsWith(' ') || nextLine.startsWith('\t'))) hasIndent = true;
+                        }
+
+                        // Off-by-one check (Simple pattern)
+                        if (qText.includes('up to') && qText.includes('inclusive') && line.includes('<') && !line.includes('<=')) {
+                            errors.push(`[Logic] The question asks for 'inclusive'. You should use '<=' instead of '<'.`);
+                            sessionStats.mistakes.offByOne++;
+                        }
+                    }
+                    if (line.includes('+=') || (line.includes('=') && !line.includes('=='))) {
+                        if (!line.includes('while ')) hasIterator = true;
+                    }
+                }
+
+                if (!hasWhile) { errors.push("[Syntax] Missing 'while' keyword."); sessionStats.mistakes.missingWhile++; }
+                if (hasWhile && !hasColon) { errors.push("[Syntax] Missing colon ':' at end of while condition."); sessionStats.mistakes.missingColon++; }
+                if (hasWhile && !hasIndent) { errors.push("[Structure] Indent the code inside your loop!"); sessionStats.mistakes.badIndent++; }
+                if (hasWhile && !hasIterator && !code.includes('input(')) {
+                    errors.push("[Logic] No update to your variables found. This will cause an Infinite Loop!");
+                    sessionStats.mistakes.missingIterator++;
+                }
+            } else {
+                // ARRAY CHECKS
+                let usedBrackets = false;
+                let usedParens = false;
+                let hasPrint = code.includes('print(');
+                let hasLen = code.includes('len(');
+                let hasAppend = code.includes('.append(');
+                
+                const qText = document.getElementById('question-text').innerText.toLowerCase();
+
+                lines.forEach(line => {
+                    if (line.includes('[') && line.includes(']')) usedBrackets = true;
+                    if (line.match(/\w+\(\d+\)/) && !line.includes('print(') && !line.includes('len(')) usedParens = true;
+
+                    // OOB check (Naive)
+                    if (line.includes('[4]') || line.includes('[5]')) {
+                        if (qText.includes('4 item')) {
+                            errors.push("[Index] Array index [4] is the 5th item. Remember indices start at 0.");
+                            sessionStats.mistakes.arrayOOB++;
+                        }
+                    }
+
+                    // Mixed Type Check
+                    if (line.includes('[') && line.includes(']')) {
+                        const arrayContentStr = line.substring(line.indexOf('[') + 1, line.lastIndexOf(']'));
+                        // Check if contains both strings (quotes) and unquoted numbers
+                        const hasString = arrayContentStr.includes('"') || arrayContentStr.includes("'");
+                        const hasNumber = /\b\d+\b/.test(arrayContentStr.replace(/["'].*?["']/g, ''));
+                        // Check for boolean
+                        const hasBoolean = /\b(True|False)\b/.test(arrayContentStr.replace(/["'].*?["']/g, ''));
+                        
+                        let typesCount = 0;
+                        if (hasString) typesCount++;
+                        if (hasNumber) typesCount++;
+                        if (hasBoolean) typesCount++;
+
+                        if (typesCount > 1) {
+                            errors.push("[Data Type] Arrays should only store data of the SAME type (e.g. all strings OR all numbers).");
+                        }
+                    }
+                    // Value as Index Check
+                    const indexMatch = line.match(/\[(\d+)\]/);
+                    if (indexMatch) {
+                        const indexVal = indexMatch[1];
+                        const valMatches = qText.match(/\d+/g) || [];
+                        if (valMatches.includes(indexVal) && indexVal > 5) {
+                            errors.push(`[Logic] It looks like you used the value '${indexVal}' as an index. Indexes are positions (starting at 0), not the data values themselves.`);
+                            sessionStats.mistakes.valueAsIndex++;
+                        }
+                    }
+
+                    // Naming Mismatch Check (Singular vs Plural)
+                    const words = line.split(/\W+/);
+                    words.forEach(w => {
+                        if (w.length > 2) {
+                            const singular = w.endsWith('s') ? w.slice(0, -1) : w;
+                            const plural = w.endsWith('s') ? w : w + 's';
+                            const other = w.endsWith('s') ? singular : plural;
+                            const otherRegex = new RegExp(`\\b${other}\\b`);
+                            if (otherRegex.test(code) && other !== w) {
+                                if (!['this','plus','pass','input','print','while'].includes(other.toLowerCase()) && !['this','plus','pass','input','print','while'].includes(w.toLowerCase())) {
+                                    errors.push(`[Naming] Inconsistent naming: '${w}' and '${other}'. Python sees these as two different variables!`);
+                                    sessionStats.mistakes.namingMismatched++;
+                                }
+                            }
+                        }
+                    });
+                });
+
+                if (qText.includes('index') && usedParens && !usedBrackets) {
+                    errors.push("[Syntax] Use [ ] for indexes, not ( ).");
+                    sessionStats.mistakes.arrayBracket++;
+                }
+                if (qText.includes('add') && code.includes('.add(')) {
+                    errors.push("[Method] In Python, use .append(), not .add().");
+                    sessionStats.mistakes.arrayMethod++;
+                }
+
+                // Check fulfillment of basic question requirements
+                if (qText.includes('length') && !hasLen) {
+                    errors.push("[Logic] You haven't used the len() function to find the length.");
+                }
+                
+                // Track literal arrays. Check if asked for X items but gave X-1 with trailing comma
+                if (qText.includes('containing 3 items')) {
+                    const arrMatch = code.match(/\[(.*?)\]/);
+                    if (arrMatch) {
+                        const contents = arrMatch[1].split(',').filter(x => x.trim() !== '');
+                        if (contents.length !== 3) {
+                            errors.push("[Structure] The question asks for an array containing exactly 3 items. Check your bracket contents and trailing commas.");
+                            sessionStats.mistakes.arrayOOB++;
+                        }
+                    }
+                }
+                if (qText.includes('containing 5 items') || qText.includes('5 numbers')) {
+                    const arrMatch = code.match(/\[(.*?)\]/);
+                    if (arrMatch) {
+                        const contents = arrMatch[1].split(',').filter(x => x.trim() !== '');
+                        if (contents.length !== 5) {
+                            errors.push("[Structure] The question asks for an array containing exactly 5 items. Make sure you count correctly.");
+                            sessionStats.mistakes.arrayOOB++;
+                        }
+                    }
+                }
+
+                if (qText.includes('print') && !hasPrint) {
+                    errors.push("[Logic] The question asked you to output a value. Don't forget print()!");
+                }
+                if (qText.includes('add') && !hasAppend) {
+                    errors.push("[Logic] You need to use the .append() method to add an item.");
+                }
+                if (qText.includes('change the value') && !code.includes('=')) {
+                    errors.push("[Logic] To update an array value, you need to use an assignment '='.");
+                }
+            }
+
+
+            // 3. ACTUAL EXECUTION
+            let output = "";
+
+            // AUTOMATIC SETUP: Use metadata setup code for "given" questions (update, append, access)
+            let setupCode = "";
+            if (meta && meta.setupCode) {
+                setupCode = meta.setupCode;
+            }
+
+            // For inputSim questions, mock input() so it doesn't hang the browser
+            let execCode = code;
+            if (meta && meta.type === "inputSim") {
+                // Simulate: first call returns wrong value, second returns the password
+                const mockSetup = `import builtins\n_input_calls = iter(["wrong", "${meta.password}"])\ndef _mock_input(prompt=""):\n    return next(_input_calls)\nbuiltins.input = _mock_input\n`;
+                setupCode = mockSetup + setupCode;
+            }
+
+            try {
+                pyodide.runPython("import sys; from io import StringIO; sys.stdout = StringIO()");
+                // Run setup + user code
+                await pyodide.runPythonAsync(setupCode + execCode);
+                output = pyodide.runPython("sys.stdout.getvalue()");
+            } catch (err) {
+                const errMsg = err.toString();
+                if (errMsg.includes("IndentationError")) {
+                    errors.push("[Python Error] Indentation Error. Check your spacing!");
+                    sessionStats.mistakes.badIndent++;
+                } else if (errMsg.includes("SyntaxError")) {
+                    errors.push("[Python Error] Syntax Error. Your code has broken grammar.");
+                    sessionStats.mistakes.syntaxError++;
+                } else if (errMsg.includes("StopIteration")) {
+                    // Input sim used too many input() calls — likely an issue with the loop
+                    errors.push("[Logic Error] Your loop called input() too many times. Check your loop condition.");
+                    sessionStats.mistakes.missingIterator++;
+                } else {
+                    const cleanErr = errMsg.split('\n').filter(l => l.includes('Error:')).pop() || errMsg.split('\n')[0];
+                    errors.push(`[Runtime Error] ${cleanErr}`);
+                    sessionStats.mistakes.syntaxError++;
+                }
+            }
+
+            // 4. OUTPUT VALIDATION — check that the code produces the correct result
+            if (errors.length === 0 && meta) {
+                if (meta.type === "countUp" || meta.type === "countDown" || meta.type === "sum" || meta.type === "multiplication") {
+                    if (meta.expectedOutput && output.trim() !== meta.expectedOutput.trim()) {
+                        errors.push(`[Output] Your code ran but produced the wrong result.\n  Expected output:\n${meta.expectedOutput.trim()}\n  Your output:\n${output.trim() || "(nothing)"}`);
+                    }
+                } else if (meta.type === "inputSim") {
+                    // Check that "Access Granted" appears in the output
+                    if (!output.toLowerCase().includes("access granted")) {
+                        errors.push(`[Output] Your code should print 'Access Granted' when the correct password is entered.`);
+                    }
+                } else if (meta.type === "access") {
+                    if (meta.expectedOutput && output.trim() !== meta.expectedOutput.trim()) {
+                        errors.push(`[Output] Wrong value printed. Expected "${meta.expectedOutput.trim()}" but got "${output.trim() || "(nothing)"}". Check your index number.`);
+                    }
+                } else if (meta.type === "update") {
+                    // Verify the array was actually updated correctly
+                    try {
+                        const checkVal = pyodide.runPython(meta.verifyCode);
+                        if (checkVal !== meta.newValue) {
+                            errors.push(`[Output] The value at index ${meta.idx} is ${checkVal}, but it should be ${meta.newValue}. Check your index and value.`);
+                        }
+                    } catch (e) {
+                        errors.push(`[Output] Could not verify the array update. Make sure you used the correct variable name 'scores'.`);
+                    }
+                } else if (meta.type === "append") {
+                    try {
+                        const listResult = pyodide.runPython(`list(${meta.verifyCode})`).toJs();
+                        const expected = meta.expectedList;
+                        const match = listResult.length === expected.length && expected.every((v, i) => listResult[i] === v);
+                        if (!match) {
+                            errors.push(`[Output] The list should be ${JSON.stringify(expected)} after appending, but got ${JSON.stringify(Array.from(listResult))}. Check your .append() call.`);
+                        }
+                    } catch (e) {
+                        errors.push(`[Output] Could not verify the list. Make sure you used the correct variable name 'users'.`);
+                    }
+                } else if (meta.type === "length") {
+                    if (meta.expectedOutput && output.trim() !== meta.expectedOutput.trim()) {
+                        errors.push(`[Output] Expected the length to be ${meta.expectedOutput.trim()}, but your code printed "${output.trim() || "(nothing)"}".`);
+                    }
+                } else if (meta.type === "iterate") {
+                    const outputLines = output.trim().split('\n').filter(l => l.trim() !== '');
+                    if (outputLines.length !== meta.expectedLineCount) {
+                        errors.push(`[Output] Your loop should print exactly ${meta.expectedLineCount} values (one per array element), but it printed ${outputLines.length}.`);
+                    }
+                }
+            }
+
+            const consoleDiv = document.getElementById('console-output');
+            if (errors.length > 0) {
+                sessionStats.streak = 0; // Reset streak on ANY mistake
+                consoleDiv.innerHTML = `<span class="msg-error">❌ Errors Found:</span>\n${errors.join('\n')}\n\n<span class="msg-info">Partial Output Captured:</span>\n${output || "None"}`;
+            } else {
+                // SUCCESS LOGIC
+                if (!topicState[currentTopic].solved) {
+                    sessionStats.score += 50;
+                    sessionStats.streak += 1;
+                    topicState[currentTopic].solved = true; // Mark as done!
+                    consoleDiv.innerHTML = `<span class="msg-success">✅ Code successfully passed checks and executed! (+50 Points)</span>\n\n<span class="msg-info">Program Output:</span>\n${output || "[No output generated]"}`;
+                } else {
+                    consoleDiv.innerHTML = `<span class="msg-success">✅ Solution still correct! (No extra points for re-checking)</span>\n\n<span class="msg-info">Program Output:</span>\n${output || "[No output generated]"}`;
+                }
+            }
+
+            saveProgress();
+            updateStatsUI();
+        }
+
+        function logConsole(msg, type) {
+            const consoleDiv = document.getElementById('console-output');
+            consoleDiv.innerHTML = `<span class="msg-${type}">${msg}</span>`;
+        }
+
+        function getChipHtml(count, checkAttempts) {
+            if (count === 0) return `<span class="status-chip chip-good">Perfect</span>`;
+            if (count <= checkAttempts * 0.2) return `<span class="status-chip chip-warning">Warning</span>`;
+            return `<span class="status-chip chip-bad">Critical Issues</span>`;
+        }
+
+        function exportReport() {
+            const studentName = prompt("Please enter your name for the report:", "");
+            if (studentName === null) return; // Cancelled
+            document.getElementById("report-student-name").innerText = `Student: ${studentName || "Anonymous Student"}`;
+
+            const date = new Date().toLocaleDateString();
+            document.getElementById("report-date").innerText = `Session Date: ${date} • Topic: Loops & Arrays`;
+            document.getElementById("rep-attempted").innerText = sessionStats.questionsAttempted;
+            
+            let totalErrors = 0;
+            for (let key in sessionStats.mistakes) totalErrors += sessionStats.mistakes[key];
+            let score = Math.max(0, 100 - (totalErrors * 5));
+            document.getElementById("rep-score").innerText = `${score}%`;
+            document.getElementById("rep-score").style.color = score >= 80 ? "#059669" : (score >= 50 ? "#d97706" : "#dc2626");
+
+            const mistakeMap = {
+                missingWhile: "Missing While Keywords",
+                missingColon: "Forgetting Colons (:)",
+                badIndent: "Indentation Consistency",
+                missingIterator: "Infinite Loop Risk (No update)",
+                arrayBracket: "Array Syntax (Brackets vs Parens)",
+                arrayMethod: "Array Methods (.append vs .add)",
+                assignVsComp: "Assignment (=) vs Comparison (==)",
+                compMissing: "Incomplete While Conditions",
+                syntaxError: "General Python Syntax",
+                logicalFlip: "Comparison Direction (> vs <)",
+                offByOne: "Boundary Errors (Inclusive/Exclusive)",
+                inputConversion: "String/Integer Input Casting",
+                arrayOOB: "Array Boundary Errors (OOB)",
+                namingMismatched: "Variable Naming Consistency",
+                valueAsIndex: "Confusing Indexes with Values"
+            };
+
+            const tbody = document.getElementById("rep-table-body");
+            tbody.innerHTML = ""; // Clear existing
+
+            let topMistakeCount = 0;
+            let topMistakeKey = "";
+
+            for (const [key, label] of Object.entries(mistakeMap)) {
+                const count = sessionStats.mistakes[key];
+                if (count > 0) {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `<td><strong>${label}</strong></td><td>${count}</td><td>${getChipHtml(count, sessionStats.checksRun)}</td>`;
+                    tbody.appendChild(row);
+                    
+                    if (count > topMistakeCount) {
+                        topMistakeCount = count;
+                        topMistakeKey = key;
+                    }
+                }
+            }
+
+            if (tbody.innerHTML === "") {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: var(--success);">Fantastic! No specific mistake patterns detected. You are writing clean, logical code.</td></tr>';
+            }
+
+            const feedbackElem = document.getElementById("rep-feedback");
+            let focusStatement = "";
+            let pedagogicalAdvice = "";
+
+            if (topMistakeCount === 0) {
+                pedagogicalAdvice = "🌟 <strong>Teacher's Note:</strong> Perfect session! Your logical accuracy and execution were flawless.";
+                focusStatement = "Continue practicing more complex nested structures next.";
+            } else {
+                pedagogicalAdvice = `⚠️ <strong>Focus Area:</strong> You encountered some issues with <strong>${mistakeMap[topMistakeKey]}</strong>.`;
+                
+                // Specific advice based on key
+                if (topMistakeKey === 'logicalFlip' || topMistakeKey === 'offByOne') pedagogicalAdvice += " Try sketching the loop boundary on paper before typing.";
+                if (topMistakeKey === 'inputConversion') pedagogicalAdvice += " Remember: input() always returns text, even if you type a number!";
+                if (topMistakeKey === 'assignVsComp') pedagogicalAdvice += " Think of '=' as 'make it equal' and '==' as 'is it equal?'.";
+                if (topMistakeKey === 'missingIterator') pedagogicalAdvice += " Always ensure the loop variable changes, or your program will never stop!";
+                if (topMistakeKey === 'namingMismatched') pedagogicalAdvice += " Variable names must match <strong>exactly</strong>. Watch out for singular vs. plural (like 'score' and 'scores')!";
+                if (topMistakeKey === 'valueAsIndex') pedagogicalAdvice += " Remember: the number inside brackets <code>[ ]</code> is the <strong>position (index)</strong>, not the data value itself.";
+
+                focusStatement = `For your next session, prioritize checking for **${mistakeMap[topMistakeKey]}** first before clicking 'Check Logic'. This will help build your visual auditing skills.`;
+            }
+
+            feedbackElem.innerHTML = `<div>${pedagogicalAdvice}</div><div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.1); font-style: italic;"><strong>Future Focus:</strong> ${focusStatement}</div>`;
+            feedbackElem.innerHTML += `<br><span style="font-size: 0.9rem; color: #64748b;">Session Reliability Score: ${sessionStats.score} (Max Streak: ${sessionStats.streak})</span>`;
+
+            setTimeout(() => {
+                html2canvas(document.getElementById("report-export-container"), { scale: 2 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Student_Report.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                });
+            }, 100);
+        }
+
+        loadProgress();
+        loadNextQuestion();
+        // Interactive Tutorial State
+        let tutStepLoops = 1;
+        let tutStepArrays = 1;
+        let tutMissionLoops = 1;
+        let tutMissionArrays = 1;
+        let CMTutLoop, CMTutArray;
+
+        window.addEventListener('load', () => {
+            const cmOptions = {
+                mode: "python",
+                theme: "dracula",
+                lineNumbers: false,
+                matchBrackets: true,
+                indentUnit: 4,
+                tabSize: 4,
+                extraKeys: {
+                    "Tab": (cm) => cm.replaceSelection("    ", "end")
+                }
+            };
+            CMTutLoop = CodeMirror(document.getElementById('tut-editor-loops'), cmOptions);
+            CMTutArray = CodeMirror(document.getElementById('tut-editor-arrays'), cmOptions);
+        });
+
+        function switchTutMission(mode, mission) {
+            if (mode === 'loops') {
+                tutMissionLoops = mission;
+                tutStepLoops = 1;
+                CMTutLoop.setValue("");
+                document.querySelectorAll('#btn-loop-lvl1, #btn-loop-lvl2').forEach(b => b.classList.remove('active'));
+                document.getElementById(`btn-loop-lvl${mission}`).classList.add('active');
+                document.querySelectorAll('.tut-dot').forEach(d => d.classList.remove('done', 'active'));
+                document.querySelectorAll('.tut-dot')[0].classList.add('active');
+                
+                if (mission === 1) {
+                    document.getElementById('tut-loop-goal').innerHTML = 'Goal: <strong>"Print the numbers 0 to 4"</strong>.';
+                    document.getElementById('tutorial-step-hint').innerText = "Step 1: count = 0";
+                } else {
+                    document.getElementById('tut-loop-goal').innerHTML = 'Goal: <strong>"Input a name repeatedly until "exit" is typed."</strong>';
+                    document.getElementById('tutorial-step-hint').innerText = "Step 1: name = \"\" (Create empty string)";
+                }
+                document.getElementById('tutorial-status').innerText = "Mission changed!";
+            } else {
+                tutMissionArrays = mission;
+                tutStepArrays = 1;
+                CMTutArray.setValue("");
+                document.querySelectorAll('#btn-arr-lvl1, #btn-arr-lvl2').forEach(b => b.classList.remove('active'));
+                document.getElementById(`btn-arr-lvl${mission}`).classList.add('active');
+                document.querySelectorAll('.tut-dot-arr').forEach(d => d.classList.remove('done', 'active'));
+                document.querySelectorAll('.tut-dot-arr')[0].classList.add('active');
+
+                if (mission === 1) {
+                    document.getElementById('tut-arr-goal').innerHTML = 'Goal: <strong>"Define names = ["A", "B"] and print index 0."</strong>';
+                    document.getElementById('tut-array-hint').innerText = "Step 1: names = [\"A\", \"B\"]";
+                } else {
+                    document.getElementById('tut-arr-goal').innerHTML = 'Goal: <strong>"Add "Banana" to a list called items."</strong>';
+                    document.getElementById('tut-array-hint').innerText = "Step 1: items = [\"Apple\"]";
+                }
+                document.getElementById('tutorial-status-array').innerText = "Mission changed!";
+            }
+        }
+
+        function verifyTutorialStep(mode) {
+            const status = mode === 'loops' ? document.getElementById('tutorial-status') : document.getElementById('tutorial-status-array');
+            const hint = mode === 'loops' ? document.getElementById('tutorial-step-hint') : document.getElementById('tut-array-hint');
+            const dots = mode === 'loops' ? document.querySelectorAll('.tut-dot') : document.querySelectorAll('.tut-dot-arr');
+            const code = mode === 'loops' ? CMTutLoop.getValue().trim() : CMTutArray.getValue().trim();
+
+            if (mode === 'loops') {
+                if (tutMissionLoops === 1) {
+                    if (tutStepLoops === 1) {
+                        if (code.includes('count') && code.includes('=') && (code.includes('0'))) {
+                            tutStepLoops++;
+                            hint.innerText = "Step 2: while count < 5:";
+                            status.innerText = "Nice! Initialization done.";
+                            dots[0].classList.add('done'); dots[1].classList.add('active');
+                        } else status.innerText = "Try: count = 0";
+                    } else if (tutStepLoops === 2) {
+                        if (code.includes('while') && code.includes('count') && code.includes('<') && code.includes('5') && code.includes(':')) {
+                            tutStepLoops++;
+                            hint.innerText = "Step 3: Indented print(count)";
+                            status.innerText = "Header correct!";
+                            dots[1].classList.add('done'); dots[2].classList.add('active');
+                        } else status.innerText = "Missing 'while', ':', or condition.";
+                    } else if (tutStepLoops === 3) {
+                        if (code.includes('print(') && code.includes('count')) {
+                            tutStepLoops++;
+                            hint.innerText = "Step 4: count = count + 1";
+                            status.innerText = "Action added!";
+                            dots[2].classList.add('done'); dots[3].classList.add('active');
+                        } else status.innerText = "Use print(count) inside the loop.";
+                    } else if (tutStepLoops === 4) {
+                        if (code.includes('count') && (code.includes('+ 1') || code.includes('+= 1'))) {
+                            status.innerText = "🏆 Count Mission Complete!";
+                            dots[3].classList.add('done');
+                        } else status.innerText = "Don't forget the update!";
+                    }
+                } else {
+                    // Mission 2: Input Loop
+                    if (tutStepLoops === 1) {
+                        if (code.includes('name') && code.includes('=')) {
+                            tutStepLoops++;
+                            hint.innerText = 'Step 2: while name != "exit":';
+                            status.innerText = "Variable ready!";
+                            dots[0].classList.add('done'); dots[1].classList.add('active');
+                        } else status.innerText = 'Try: name = ""';
+                    } else if (tutStepLoops === 2) {
+                        if (code.includes('while') && code.includes('!=') && code.includes('"exit"')) {
+                            tutStepLoops++;
+                            hint.innerText = 'Step 3: Indented name = input("Enter name: ")';
+                            status.innerText = "Loop condition set!";
+                            dots[1].classList.add('done'); dots[2].classList.add('active');
+                        } else status.innerText = 'Hint: while name != "exit":';
+                    } else if (tutStepLoops === 3) {
+                        if (code.includes('input') && code.includes('name =')) {
+                            status.innerText = "🏆 Input Mission Complete!";
+                            dots[2].classList.add('done');
+                        } else status.innerText = "Hint: name = input('...')";
+                    }
+                }
+            } else {
+                if (tutMissionArrays === 1) {
+                    if (tutStepArrays === 1) {
+                        if (code.includes('names') && code.includes('A') && code.includes('B')) {
+                            tutStepArrays++;
+                            hint.innerText = "Step 2: print(names[0])";
+                            status.innerText = "Array created!";
+                            dots[0].classList.add('done'); dots[1].classList.add('active');
+                        } else status.innerText = 'Try: names = ["A", "B"]';
+                    } else if (tutStepArrays === 2) {
+                        if (code.includes('print') && code.includes('[0]')) {
+                            status.innerText = "🏆 Indexing Mission Complete!";
+                            dots[1].classList.add('done');
+                        } else status.innerText = "Try: print(names[0])";
+                    }
+                } else {
+                    // Mission 2: Populate
+                    if (tutStepArrays === 1) {
+                        if (code.includes('items') && code.includes('Apple')) {
+                            tutStepArrays++;
+                            hint.innerText = 'Step 2: items.append("Banana")';
+                            status.innerText = "Initial list ready!";
+                            dots[0].classList.add('done'); dots[1].classList.add('active');
+                        } else status.innerText = 'Try: items = ["Apple"]';
+                    } else if (tutStepArrays === 2) {
+                        if (code.includes('.append') && code.includes('Banana')) {
+                            status.innerText = "🏆 Append Mission Complete!";
+                            dots[1].classList.add('done');
+                        } else status.innerText = 'Hint: items.append("Banana")';
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
